@@ -5,106 +5,79 @@
     <title>Portal UEC El Caujaral</title>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        .logo { width: 120px; height: 120px; border-radius: 50%; margin-bottom: 20px; border: 3px solid #84CF56; object-fit: cover; }
-        h2 { color: #333; margin-bottom: 20px; }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { background: #84CF56; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #73b84b; }
-        #panel-profesor, #panel-estudiante { display: none; }
-        .footer { font-size: 12px; color: #888; margin-top: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 15px; margin: 20px auto; width: 90%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .section { display: none; }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background: #84CF56; color: white; border: none; cursor: pointer; }
+        iframe { width: 100%; height: 500px; border: none; }
     </style>
-    <script type="text/javascript">
+</head>
+<body>
+
+    <div id="div-login" class="container">
+        <h2>Acceso UEC El Caujaral</h2>
+        <input type="text" id="user" placeholder="Usuario">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <button onclick="verificar()">Entrar</button>
+    </div>
+
+    <div id="div-profesor" class="container" style="display:none;">
+        <h2>Panel Docente</h2>
+        <input type="file" id="fileInput">
+        <input type="text" id="grado" placeholder="Grado">
+        <input type="text" id="materia" placeholder="Materia">
+        <select id="alumnoSelect"><option value="Alex">Alex</option><option value="Sofia">Sofia</option></select>
+        <button id="btnEnviar" onclick="enviarArchivo()">📤 Enviar</button>
+    </div>
+
+    <div id="div-visor" class="container" style="display:none;">
+        <h2>Visualizador</h2>
+        <iframe id="iframeVisor"></iframe>
+        <button onclick="location.href='index.html'">Volver al Inicio</button>
+    </div>
+
+    <script>
         (function() { emailjs.init("3XgvL4XF6IdEb6r-W"); })();
 
-        let nombreProfesorActual = "";
+        // LÓGICA DE NAVEGACIÓN
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('archivo')) {
+                document.getElementById('div-visor').style.display = 'block';
+                document.getElementById('iframeVisor').src = "https://docs.google.com/viewer?url=" + encodeURIComponent(params.get('archivo')) + "&embedded=true";
+            } else {
+                document.getElementById('div-login').style.display = 'block';
+            }
+        };
 
         function verificar() {
             const u = document.getElementById('user').value;
             const p = document.getElementById('pass').value;
-            const profesores = {"Carlos": "123456", "Maria": "profe2026"};
-            const estudiantes = {"Alex": "123", "Sofia": "estudiante456"};
-
-            if (profesores[u] && profesores[u] === p) {
-                nombreProfesorActual = u;
-                document.getElementById('login-div').style.display = 'none';
-                document.getElementById('panel-profesor').style.display = 'block';
-            } else if (estudiantes[u] && estudiantes[u] === p) {
-                document.getElementById('login-div').style.display = 'none';
-                document.getElementById('panel-estudiante').style.display = 'block';
-            } else { alert("Credenciales incorrectas"); }
+            if (u === "Carlos" && p === "123456") {
+                document.getElementById('div-login').style.display = 'none';
+                document.getElementById('div-profesor').style.display = 'block';
+            } else { alert("Error"); }
         }
 
         async function enviarArchivo() {
             const file = document.getElementById('fileInput').files[0];
-            const grado = document.getElementById('grado').value;
-            const materia = document.getElementById('materia').value;
-            const alumno = document.getElementById('alumnoSelect').value;
             const btn = document.getElementById('btnEnviar');
-
-            if (!file || !grado || !materia) return alert("Completa todos los campos");
-
-            btn.innerText = "Subiendo archivo...";
-            btn.disabled = true;
-
+            btn.innerText = "Subiendo...";
+            
             const formData = new FormData();
             formData.append("file", file);
+            const res = await fetch("https://store1.gofile.io/uploadFile", { method: "POST", body: formData });
+            const result = await res.json();
 
-            try {
-                const res = await fetch("https://store1.gofile.io/uploadFile", { method: "POST", body: formData });
-                const result = await res.json();
-
-                if (result.status === "ok") {
-                    await emailjs.send("service_y70jk69", "template_4fg6n5u", {
-                        profesor: nombreProfesorActual,
-                        estudiante: alumno,
-                        grado: grado,
-                        materia: materia,
-                        nombre_archivo: file.name,
-                        link_descarga: result.data.downloadPage
-                    });
-                    alert("✅ ¡Calificación enviada correctamente a " + alumno + "!");
-                    btn.innerText = "📤 Enviar Calificación";
-                    btn.disabled = false;
-                }
-            } catch (err) {
-                alert("Error al subir. Recuerda usar Netlify Drop para evitar bloqueos.");
-                btn.disabled = false;
+            if (result.status === "ok") {
+                await emailjs.send("service_y70jk69", "template_4fg6n5u", {
+                    estudiante: document.getElementById('alumnoSelect').value,
+                    link_descarga: result.data.downloadPage
+                });
+                alert("✅ Enviado!");
             }
         }
     </script>
-</head>
-<body>
-    <div class="container">
-        <img src="https://i.ibb.co/s9vjp0PS/347292015-791076059000176-3359367955993139165-n.jpg" class="logo" alt="Logo UEC">
-        
-        <div id="login-div">
-            <h2>Acceso al Portal</h2>
-            <input type="text" id="user" placeholder="Usuario">
-            <input type="password" id="pass" placeholder="Contraseña">
-            <button onclick="verificar()">Entrar</button>
-        </div>
-
-        <div id="panel-profesor">
-            <h2>Panel Docente</h2>
-            <input type="file" id="fileInput">
-            <input type="text" id="grado" placeholder="Grado/Año">
-            <input type="text" id="materia" placeholder="Materia">
-            <select id="alumnoSelect">
-                <option value="Alex">Alex</option>
-                <option value="Sofia">Sofia</option>
-            </select>
-            <button id="btnEnviar" onclick="enviarArchivo()">📤 Enviar Calificación</button>
-        </div>
-
-        <div id="panel-estudiante">
-            <h2>Panel Estudiante</h2>
-            <p>Bienvenido. Por favor revisa tu correo para ver nuevas calificaciones.</p>
-            <button onclick="location.reload()">Cerrar Sesión</button>
-        </div>
-        
-        <div class="footer">UEC El Caujaral © 2026</div>
-    </div>
 </body>
 </html>
