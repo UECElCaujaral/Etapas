@@ -2,106 +2,104 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Portal UEC El Caujaral</title>
-    <!-- Favicon -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Envío Docente - UEC El Caujaral</title>
+    <!-- Favicon con el logo -->
     <link rel="icon" href="https://i.ibb.co/s9vjp0PS/347292015-791076059000176-3359367955993139165-n.jpg">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; text-align: center; margin: 0; }
-        .container { background: white; padding: 25px; border-radius: 15px; margin: 20px auto; width: 90%; max-width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .section { display: none; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-        button { background: #84CF56; color: white; border: none; cursor: pointer; font-weight: bold; }
-        iframe { width: 100%; height: 500px; border: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .logo { width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px; border: 3px solid #84CF56; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { background: #84CF56; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #73b84b; }
+        #panel-profesor { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="div-login" class="container">
-        <img src="https://i.ibb.co/s9vjp0PS/347292015-791076059000176-3359367955993139165-n.jpg" style="width:80px; border-radius:50%">
-        <h2>Portal UEC El Caujaral</h2>
-        <input type="text" id="user" placeholder="Usuario">
-        <input type="password" id="pass" placeholder="Contraseña">
-        <button onclick="verificar()">Entrar</button>
-    </div>
+    <div class="container">
+        <img src="https://i.ibb.co/s9vjp0PS/347292015-791076059000176-3359367955993139165-n.jpg" class="logo" alt="Logo UEC">
+        
+        <!-- LOGIN PROFESOR -->
+        <div id="login-div">
+            <h2 style="color: #333;">Acceso Docente</h2>
+            <input type="text" id="user" placeholder="Nombre del Profesor">
+            <input type="password" id="pass" placeholder="Contraseña">
+            <button onclick="entrar()">Ingresar</button>
+        </div>
 
-    <div id="div-profesor" class="container section">
-        <h2>Panel Docente</h2>
-        <input type="file" id="fileInput">
-        <input type="text" id="grado" placeholder="Grado">
-        <input type="text" id="materia" placeholder="Materia">
-        <select id="alumnoSelect"><option value="Alex">Alex</option><option value="Sofia">Sofia</option></select>
-        <button id="btnEnviar" onclick="enviarArchivo()">📤 Enviar Calificación</button>
-    </div>
-
-    <div id="div-estudiante" class="container section">
-        <h2>Mis Calificaciones</h2>
-        <div id="lista-tareas"></div>
-        <button onclick="location.reload()">Cerrar Sesión</button>
-    </div>
-
-    <div id="div-visor" class="container section">
-        <h2>Visor</h2>
-        <iframe id="iframeVisor"></iframe>
-        <button onclick="location.reload()">Volver al Inicio</button>
+        <!-- FORMULARIO DE ENVÍO -->
+        <div id="panel-profesor">
+            <h2 style="color: #333;">Enviar Archivo a Directiva</h2>
+            <input type="file" id="fileInput" required>
+            <input type="text" id="grado" placeholder="Grado / Año (Ej: 2do Año)" required>
+            <input type="text" id="materia" placeholder="Materia (Ej: Matemáticas)" required>
+            <input type="text" id="alumno" placeholder="Nombre del Estudiante" required>
+            <input type="email" id="email_profesor" placeholder="Tu correo (Para recibir rechazos)" required>
+            
+            <button id="btnEnviar" onclick="subirYEnviar()">📤 Enviar a Revisión</button>
+        </div>
     </div>
 
     <script>
         (function() { emailjs.init("3XgvL4XF6IdEb6r-W"); })();
 
-        function verificar() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            const profesores = {"Carlos": "123456", "Maria": "profe2026"};
-            const estudiantes = {"Alex": "123", "Sofia": "estudiante456"};
-
-            if (profesores[u] && profesores[u] === p) {
-                document.getElementById('div-login').style.display = 'none';
-                document.getElementById('div-profesor').style.display = 'block';
-            } else if (estudiantes[u] && estudiantes[u] === p) {
-                document.getElementById('div-login').style.display = 'none';
-                document.getElementById('div-estudiante').style.display = 'block';
-                cargarTareas(u);
-            } else { alert("Credenciales incorrectas"); }
+        function entrar() {
+            if(document.getElementById('user').value.trim() !== "") {
+                document.getElementById('login-div').style.display = 'none';
+                document.getElementById('panel-profesor').style.display = 'block';
+            } else { alert("Ingresa tu nombre"); }
         }
 
-        async function enviarArchivo() {
+        async function subirYEnviar() {
             const file = document.getElementById('fileInput').files[0];
+            const grado = document.getElementById('grado').value;
+            const materia = document.getElementById('materia').value;
+            const alumno = document.getElementById('alumno').value;
+            const emailProfesor = document.getElementById('email_profesor').value;
+            const profe = document.getElementById('user').value;
             const btn = document.getElementById('btnEnviar');
-            btn.innerText = "Subiendo...";
-            
-            const formData = new FormData(); formData.append("file", file);
-            const res = await fetch("https://store1.gofile.io/uploadFile", { method: "POST", body: formData });
-            const result = await res.json();
 
-            if (result.status === "ok") {
-                // Guardar en LocalStorage
-                let tareas = JSON.parse(localStorage.getItem('tareas_uec') || '[]');
-                tareas.push({alumno: document.getElementById('alumnoSelect').value, link: result.data.downloadPage, mat: document.getElementById('materia').value});
-                localStorage.setItem('tareas_uec', JSON.stringify(tareas));
-                
-                await emailjs.send("service_y70jk69", "template_4fg6n5u", {
-                    estudiante: document.getElementById('alumnoSelect').value,
-                    link_descarga: result.data.downloadPage,
-                    materia: document.getElementById('materia').value
-                });
-                alert("✅ Enviado y disponible para el alumno");
-                btn.innerText = "📤 Enviar Calificación";
+            if (!file || !grado || !materia || !alumno || !emailProfesor) {
+                return alert("Por favor completa todos los campos.");
             }
-        }
 
-        function cargarTareas(nombre) {
-            const lista = document.getElementById('lista-tareas');
-            const tareas = JSON.parse(localStorage.getItem('tareas_uec') || '[]');
-            tareas.filter(t => t.alumno === nombre).forEach(t => {
-                lista.innerHTML += `<button onclick="abrirVisor('${t.link}')">📁 Ver ${t.mat}</button>`;
-            });
-        }
+            btn.innerText = "Subiendo archivo a la nube...";
+            btn.disabled = true;
 
-        function abrirVisor(link) {
-            document.getElementById('div-estudiante').style.display = 'none';
-            document.getElementById('div-visor').style.display = 'block';
-            document.getElementById('iframeVisor').src = "https://docs.google.com/viewer?url=" + encodeURIComponent(link) + "&embedded=true";
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                // Sube a GoFile
+                const res = await fetch("https://store1.gofile.io/uploadFile", { method: "POST", body: formData });
+                const result = await res.json();
+
+                if (result.status === "ok") {
+                    btn.innerText = "Enviando correo a la directiva...";
+                    
+                    // Manda el correo a la dirección con EmailJS
+                    await emailjs.send("service_y70jk69", "template_4fg6n5u", {
+                        profesor: profe,
+                        email_profesor: emailProfesor,
+                        estudiante: alumno,
+                        grado: grado,
+                        materia: materia,
+                        link_descarga: result.data.downloadPage
+                    });
+
+                    alert("✅ Archivo enviado exitosamente. En espera de que la directiva lo acepte.");
+                    document.getElementById('fileInput').value = "";
+                    btn.innerText = "📤 Enviar a Revisión";
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                alert("Error de conexión. Intenta nuevamente.");
+                btn.innerText = "📤 Enviar a Revisión";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
